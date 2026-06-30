@@ -1,0 +1,143 @@
+{
+  "key_case": {
+    "pass_id": "GRANULARITY-TEST-001",
+    "battery_voltage_start": 8.202,
+    "battery_voltage_end": 8.287,
+    "windowed_severity": "CRITICAL",
+    "windowed_score": 0.88,
+    "point_severity": "CRITICAL",
+    "point_score": 0.9983
+  },
+  "trend_passes": [
+    {
+      "pass_id": "TREND-EPS-001",
+      "anomaly_type": "trend",
+      "subsystem": "eps",
+      "expected_severity": "WATCH",
+      "windowed_score": 1.0,
+      "windowed_severity": "CRITICAL",
+      "point_score": 0.9974,
+      "point_severity": "CRITICAL"
+    },
+    {
+      "pass_id": "TREND-EPS-002",
+      "anomaly_type": "trend",
+      "subsystem": "eps",
+      "expected_severity": "WATCH",
+      "windowed_score": 1.0,
+      "windowed_severity": "CRITICAL",
+      "point_score": 0.9974,
+      "point_severity": "CRITICAL"
+    },
+    {
+      "pass_id": "TREND-EPS-003",
+      "anomaly_type": "trend",
+      "subsystem": "eps",
+      "expected_severity": "WATCH",
+      "windowed_score": 1.0,
+      "windowed_severity": "CRITICAL",
+      "point_score": 0.9815,
+      "point_severity": "CRITICAL"
+    },
+    {
+      "pass_id": "TREND-TCS-001",
+      "anomaly_type": "trend",
+      "subsystem": "tcs",
+      "expected_severity": "WATCH",
+      "windowed_score": 0.97,
+      "windowed_severity": "CRITICAL",
+      "point_score": 0.9149,
+      "point_severity": "CRITICAL"
+    },
+    {
+      "pass_id": "TREND-TCS-002",
+      "anomaly_type": "trend",
+      "subsystem": "tcs",
+      "expected_severity": "WATCH",
+      "windowed_score": 1.0,
+      "windowed_severity": "CRITICAL",
+      "point_score": 0.9997,
+      "point_severity": "CRITICAL"
+    },
+    {
+      "pass_id": "TREND-TCS-003",
+      "anomaly_type": "trend",
+      "subsystem": "tcs",
+      "expected_severity": "WATCH",
+      "windowed_score": 0.97,
+      "windowed_severity": "CRITICAL",
+      "point_score": 0.9985,
+      "point_severity": "CRITICAL"
+    },
+    {
+      "pass_id": "TREND-AOCS-001",
+      "anomaly_type": "trend",
+      "subsystem": "aocs",
+      "expected_severity": "WATCH",
+      "windowed_score": 0.99,
+      "windowed_severity": "CRITICAL",
+      "point_score": 0.9997,
+      "point_severity": "CRITICAL"
+    },
+    {
+      "pass_id": "TREND-AOCS-002",
+      "anomaly_type": "trend",
+      "subsystem": "aocs",
+      "expected_severity": "WATCH",
+      "windowed_score": 0.99,
+      "windowed_severity": "CRITICAL",
+      "point_score": 0.9983,
+      "point_severity": "CRITICAL"
+    },
+    {
+      "pass_id": "TREND-AOCS-003",
+      "anomaly_type": "trend",
+      "subsystem": "aocs",
+      "expected_severity": "WATCH",
+      "windowed_score": 1.0,
+      "windowed_severity": "CRITICAL",
+      "point_score": 0.998,
+      "point_severity": "CRITICAL"
+    },
+    {
+      "pass_id": "BORDER-0001",
+      "anomaly_type": "trend",
+      "subsystem": "eps",
+      "expected_severity": "WATCH",
+      "windowed_score": 0.99,
+      "windowed_severity": "CRITICAL",
+      "point_score": 0.9973,
+      "point_severity": "CRITICAL"
+    },
+    {
+      "pass_id": "BORDER-0002",
+      "anomaly_type": "trend",
+      "subsystem": "tcs",
+      "expected_severity": "WATCH",
+      "windowed_score": 1.0,
+      "windowed_severity": "CRITICAL",
+      "point_score": 0.9997,
+      "point_severity": "CRITICAL"
+    },
+    {
+      "pass_id": "BORDER-0006",
+      "anomaly_type": "trend",
+      "subsystem": "eps",
+      "expected_severity": "WATCH",
+      "windowed_score": 0.98,
+      "windowed_severity": "CRITICAL",
+      "point_score": 0.9041,
+      "point_severity": "CRITICAL"
+    },
+    {
+      "pass_id": "BORDER-0007",
+      "anomaly_type": "trend",
+      "subsystem": "tcs",
+      "expected_severity": "WATCH",
+      "windowed_score": 1.0,
+      "windowed_severity": "CRITICAL",
+      "point_score": 0.9992,
+      "point_severity": "CRITICAL"
+    }
+  ]
+}

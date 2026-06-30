@@ -1,0 +1,17 @@
+{
+  "key_case": {
+    "pass_id": "FUSION-TEST-001",
+    "battery_voltage_range": [
+      7.42,
+      8.21
+    ],
+    "note": "All looks fine. Nominal pass. Battery stable, no concerns.",
+    "late_fusion_severity": "CRITICAL",
+    "late_fusion_confidence": 0.1,
+    "early_fusion_severity": "NOMINAL"
+  },
+  "overall_accuracy": {
+    "late_fusion": 0.1468,
+    "early_fusion": 0.9817
+  }
+}
