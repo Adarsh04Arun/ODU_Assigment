@@ -1,16 +1,9 @@
 """
 Late fusion layer — combines numeric and text severity scores.
-
-Implements PDD Section 6.3 (late fusion recommendation) and Section 7.1
-stage 5 (fusion & presentation layer).
-
-Design: numeric severity and text severity are computed fully independently
-(Steps 5 and 6 never see each other's output), then combined by an explicit
-rule. Hard-limit results from Step 4 are applied first and override everything.
-
-Combined confidence = min(numeric_confidence, text_confidence)
-per PDD Section 7.2.2's decided-not-built choice: "we are only as confident
-as our least confident input."
+Stage 4, the combiner. fuse_scores(breaches, numeric, text, note) implements late fusion:
+If any hard-limit breach exists → CRITICAL at confidence 1.0, done (overrides all).
+Otherwise take the higher severity of numeric vs text; if both independently agree on the same non-trivial band, escalate one level.
+Combined confidence = min of the two ("only as confident as our least confident input").
 """
 
 import sys
@@ -41,9 +34,7 @@ def fuse_scores(hard_limit_breaches, numeric_result, text_result, operator_note)
     """
     reasoning_trace = []
 
-    # ------------------------------------------------------------------
-    # Stage 1: Hard-limit check (always wins, never overridden)
-    # ------------------------------------------------------------------
+    #Hard-limit check (always wins, never overridden)
     if hard_limit_breaches:
         for breach in hard_limit_breaches:
             reasoning_trace.append({

@@ -1,14 +1,11 @@
 """
-Synthetic anomaly injection for the spacecraft telemetry health assessment.
-
-Implements Step 3 of the Implementation Plan, resolving the open question
-from PDD Section 9 (anomaly injection strategy not yet specified).
-
-Anomaly taxonomy (grounded in SMAP/MSL literature, PDD Section 2):
-  - Point anomalies:      single reading or short burst sharply out of band
-  - Contextual anomalies: value in-range but wrong given current context
-  - Trend anomalies:      gradual drift toward a limit across the pass
-  - Hard-limit breaches:  values outside survival/safety thresholds (PDD 5.2)
+Takes clean passes from the generator and injects labelled anomalies to build
+the test set. 
+Anomaly Classification  (grounded in SMAP/MSL literature):
+  - Point anomalies:      single reading or short burst sharply out of band (e.g. voltage drop, RSSI dropout, SEU spike)
+  - Contextual anomalies: value in-range but wrong given current context (e.g. battery discharging during sunlight)
+  - Trend anomalies:      gradual drift toward a limit across the pass (e.g. voltage slowly declining)
+  - Hard-limit breaches:  values outside survival/safety thresholds 
 
 Usage:
     python data/anomaly_injection.py            # generates the full labelled set
@@ -22,13 +19,12 @@ import sys
 import argparse
 import numpy as np
 
-# Add project root to path so we can import the generator
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from data.synthetic_generator import generate_one_pass, READINGS_PER_PASS
 
 
 # ===========================================================================
-# 3.1 — Anomaly type definitions
+# Anomaly type definitions
 # ===========================================================================
 
 ANOMALY_TYPES = ["point", "contextual", "trend", "hard_limit"]
@@ -45,7 +41,7 @@ EXPECTED_SEVERITY = {
 
 
 # ===========================================================================
-# 3.2 — Injector functions: one per anomaly-type × subsystem combination
+# Injector functions: one per anomaly-type × subsystem combination
 # Each takes a nominal pass (deep-copied) and returns the modified pass
 # plus a ground-truth label dict.
 # ===========================================================================
@@ -355,7 +351,7 @@ INJECTORS = {
 
 
 # ===========================================================================
-# 3.3 — Generate the full labelled dataset
+# Generate the full labelled dataset
 # ===========================================================================
 
 def generate_labelled_dataset(n_nominal=60, n_per_injector=3,
@@ -426,7 +422,6 @@ def main():
     os.makedirs(out_dir, exist_ok=True)
 
     if args.demo:
-        # Deliverable check: produce exactly the 3 required demo passes
         print("=== Generating 3 demo passes ===\n")
 
         # 1. Clearly CRITICAL: hard-limit battery voltage breach

@@ -1,14 +1,12 @@
 """
-Severity band definitions for the spacecraft telemetry health assessment.
-
-Maps to PDD Section 4 — four-level severity scheme:
-  NOMINAL → WATCH → CAUTION → CRITICAL
-
+- Defines the four bands NOMINAL → WATCH → CAUTION → CRITICAL, their score cut-offs (SCORE_THRESHOLDS: NOMINAL 0–0.3, WATCH 0.3–0.6, CAUTION 0.6–0.85, CRITICAL 0.85–1.0), and UI colours. 
+- Helpers: score_to_severity(score) maps a 0–1 score to a band; 
+           higher_severity(a, b)=max(a,b).
 These thresholds are applied to the normalised anomaly scores (0.0 to 1.0)
 produced by the numeric and text scoring layers.
 """
 
-# --- Severity levels (PDD Section 4) ---
+# Severity levels
 NOMINAL = "NOMINAL"
 WATCH = "WATCH"
 CAUTION = "CAUTION"
@@ -27,7 +25,7 @@ SCORE_THRESHOLDS = {
     CRITICAL: (0.85, 1.0),  # Score above 0.85 → high-confidence active fault
 }
 
-# Colours for the UI severity badges (PDD Section 7.3)
+# Colours for the UI severity badges 
 SEVERITY_COLOURS = {
     NOMINAL: "#2ecc71",   # green
     WATCH:   "#f39c12",   # amber

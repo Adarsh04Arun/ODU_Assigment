@@ -1,24 +1,13 @@
 """
 Text scoring layer — lightweight classification of operator notes.
-
-Implements PDD Section 6.3 (using the operator's text note).
-
-Design decision: keyword/phrase-pattern classifier, not TF-IDF + logistic
-regression. Rationale (per Implementation Plan Step 6.2): with a hand-built
-synthetic note corpus, data volume is too small to honestly validate a learned
-model. The keyword approach is the easier of the two to explain line-by-line
-in a live demo, and "I chose the simpler option because I could fully defend
-it" is a stronger answer than a marginally fancier model you'd have to hedge on.
-
-The operator note vocabulary is narrow and repetitive (PDD Section 6.3):
-operators use a small set of concern-indicating and reassurance-indicating
-phrases. A hand-built keyword classifier captures this well.
+Stage 3, the operator-note reader. A deliberately simple keyword/phrase classifier (not TF-IDF), chosen because the note vocabulary is narrow and a keyword model is fully explainable in a live demo. 
+CONCERN_PHRASES push severity up, REASSURANCE_PHRASES push it down, with a small negation check so "not nominal" flips to mild concern. 
+score_note(text) returns a 0–1 score, a confidence (based on how many phrases matched), the matched phrases, and a human-readable reasoning string. 
+Includes a SAMPLE_NOTES validation corpus.
 """
 
-# ===========================================================================
-# 6.1 — Operator note vocabulary (concern and reassurance phrases)
-# ===========================================================================
 
+#Operator note vocabulary (concern and reassurance phrases)
 # Concern-indicating phrases — presence pushes severity up
 CONCERN_PHRASES = {
     # High concern (maps toward CAUTION)
@@ -46,6 +35,8 @@ CONCERN_PHRASES = {
     "drift": 0.4,
     "drifting": 0.4,
     "fluctuating": 0.4,
+    "fluctuations": 0.45,
+    "voltage fluctuation": 0.55,
     "watching it": 0.4,
     "keep an eye": 0.4,
     "monitor": 0.35,
@@ -81,6 +72,25 @@ REASSURANCE_PHRASES = {
 }
 
 
+_NEGATION_WORDS = {"not", "isn't", "aren't", "no", "never", "don't", "doesn't",
+                   "didn't", "won't", "cannot", "can't", "neither", "nor"}
+
+
+def _is_negated(text, phrase):
+    """Return True if the phrase appears preceded by a negation word (within 3 words)."""
+    idx = text.find(phrase)
+    while idx != -1:
+        before_tokens = text[:idx].split()
+        # Check last 1–3 tokens before the phrase for a negation word
+        for token in before_tokens[-3:]:
+            # Strip punctuation from token edges before comparing
+            clean = token.strip(".,;:!?\"'")
+            if clean in _NEGATION_WORDS:
+                return True
+        idx = text.find(phrase, idx + 1)
+    return False
+
+
 def score_note(note_text):
     """Score an operator note for severity contribution.
 
@@ -104,11 +114,17 @@ def score_note(note_text):
             matched.append((phrase, weight))
             raw_score += weight
 
-    # Check reassurance phrases
+    # Check reassurance phrases — skip if the phrase is negated (e.g. "not normal")
     for phrase, weight in REASSURANCE_PHRASES.items():
         if phrase in text:
-            matched.append((phrase, weight))
-            raw_score += weight  # weight is negative for reassurance
+            if _is_negated(text, phrase):
+                # Negated reassurance flips to a mild concern signal
+                flip_weight = abs(weight) * 0.5
+                matched.append((f"not {phrase}", flip_weight))
+                raw_score += flip_weight
+            else:
+                matched.append((phrase, weight))
+                raw_score += weight  # weight is negative for reassurance
 
     # Normalise to [0, 1]
     # With multiple matches, raw_score can exceed 1.0 or go below 0.0
@@ -143,11 +159,8 @@ def score_note(note_text):
     }
 
 
-# ===========================================================================
-# 6.1 — Synthetic operator note corpus
+# Synthetic operator note corpus
 # Notes paired with expected severity for validation.
-# ===========================================================================
-
 SAMPLE_NOTES = [
     # NOMINAL notes
     ("All systems nominal. Clean pass, no issues observed.", "NOMINAL"),

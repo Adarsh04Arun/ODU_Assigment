@@ -1,15 +1,7 @@
 """
-Synthetic telemetry generator for a 3U-6U CubeSat-class LEO satellite,
-single-string COTS EPS architecture.
-
-Mission assumption (PDD Section 3): all ranges below are for a CubeSat-class
-LEO satellite. Several ranges — particularly bus voltage — are architecture-
-dependent and would be wrong for a larger GEO-class platform.
-
-Implements PDD Section 3 (parameter schema) and Section 3.7 (orbital context).
-Each generated pass is a dict containing per-channel time series across a
-single ground-station contact window.
-
+Generates nominal (healthy) per-pass telemetry for a 3U–6U CubeSat-class LEO
+satellite. One "pass" = 300 readings at 1 Hz (~5-minute ground contact).
+Based on the available data through the various research papers, weh have taken LEO Satellite as reference
 Usage:
     python data/synthetic_generator.py          # generates 100 nominal passes
     python data/synthetic_generator.py --n 200  # generates 200 nominal passes
@@ -29,10 +21,6 @@ READINGS_PER_PASS = 300
 SAMPLE_INTERVAL_S = 1.0  # seconds between readings
 
 
-# ===========================================================================
-# 2.2 — Orbital / pass context (PDD Section 3.7)
-# Generated first because physical channels depend on eclipse state.
-# ===========================================================================
 
 def generate_pass_context(rng, pass_id):
     """Generate eclipse flag and pass timing for one ground-station pass.
@@ -71,21 +59,16 @@ def generate_pass_context(rng, pass_id):
     }
 
 
-# ===========================================================================
-# 2.1 — Per-subsystem generators (PDD Section 3.2–3.6)
-# Each function takes the pass context and returns channel arrays.
-# ===========================================================================
-
 def generate_eps(rng, ctx):
-    """Electrical Power System (PDD Section 3.2).
+    """Electrical Power System
 
-    Battery bus voltage: ~8.2V nominal, 6.2-8.4V across charge cycle [Tier 1]
+    Battery bus voltage: ~8.2V nominal, 6.2-8.4V across charge cycle
         Source: AAC Clyde STARBUCK-NANO EPS, Aalto-1 flight telemetry.
-    Regulated rails: 3.3V, 5.0V [Tier 1]
+    Regulated rails: 3.3V, 5.0V 
         Source: NASA small-spacecraft power systems reference.
-    Solar array current: scaled to panel area and eclipse state [Tier 3]
-        Design assumption — no single CubeSat-wide figure found.
-    Battery charge/discharge rate: derived from voltage trend [Tier 3]
+    Solar array current: scaled to panel area and eclipse state
+        Design assumption 
+    Battery charge/discharge rate: derived from voltage trend 
         Computed, not sourced independently.
     """
     n = READINGS_PER_PASS
@@ -129,15 +112,15 @@ def generate_eps(rng, ctx):
 
 
 def generate_tcs(rng, ctx):
-    """Thermal Control System (PDD Section 3.3).
+    """Thermal Control System 
 
-    Sun-facing panel temp: -20C to +75C [Tier 1]
+    Sun-facing panel temp: -20C to +75C 
         Source: MinXSS CubeSat thermal-balance flight data.
-    Shaded panel temp: -16C to +17C [Tier 1]
+    Shaded panel temp: -16C to +17C 
         Source: MinXSS radiator plate flight data.
-    Battery temperature: comfort band -5C to +40C [Tier 2]
+    Battery temperature: comfort band -5C to +40C 
         Source: common Li-ion safe-operation guidance.
-    Internal component temp: -40C to +100C survival [Tier 1]
+    Internal component temp: -40C to +100C survival
         Source: DeMi CubeSat published thermal budget.
     """
     n = READINGS_PER_PASS
@@ -180,15 +163,15 @@ def generate_tcs(rng, ctx):
 
 
 def generate_aocs(rng, ctx):
-    """Attitude & Orbit Control System (PDD Section 3.4).
+    """Attitude & Orbit Control System
 
-    Reaction wheel speed: 3000-8000 RPM [Tier 1]
+    Reaction wheel speed: 3000-8000 RPM 
         Source: CADRE flight wheels (3400 RPM), UWE-3 (8000 RPM nominal).
-    Pointing accuracy: 0.003-1.0 deg [Tier 1]
+    Pointing accuracy: 0.003-1.0 deg 
         Source: CADRE (1.0 deg), Blue Canyon XACT (0.003 deg).
-    Gyro angular rate: MEMS-class, tens of deg/s full-scale [Tier 1]
+    Gyro angular rate: MEMS-class, tens of deg/s full-scale 
         Source: AAC Clyde PG400 gyroscope datasheet.
-    Attitude error: sub-degree to ~2 deg during nominal tracking [Tier 1]
+    Attitude error: sub-degree to ~2 deg during nominal tracking 
         Derived from pointing accuracy range.
     """
     n = READINGS_PER_PASS
@@ -219,11 +202,11 @@ def generate_aocs(rng, ctx):
 
 
 def generate_comms(rng, ctx):
-    """Communications (PDD Section 3.5).
+    """Communications
 
-    RSSI: approx -100 to -60 dBm at typical LEO pass ranges [Tier 3]
+    RSSI: approx -100 to -60 dBm at typical LEO pass ranges 
         Derived from UHF link-budget path-loss figures, not a single named spec.
-    Downlink data rate: low kbps to ~1 Mbps class [Tier 1]
+    Downlink data rate: low kbps to ~1 Mbps class 
         Source: CubeSat ground-station link-budget literature.
     """
     n = READINGS_PER_PASS
@@ -250,13 +233,13 @@ def generate_comms(rng, ctx):
 
 
 def generate_obc(rng, ctx):
-    """On-Board Computer / CDH (PDD Section 3.6).
+    """On-Board Computer / CDH
 
-    CPU load: 0-100% [Tier 3]
+    CPU load: 0-100% 
         Generic computing telemetry, no spacecraft-specific nominal band found.
-    Memory occupancy: 0-100% [Tier 3]
+    Memory occupancy: 0-100% 
         Same as CPU load — direction grounded in real OBC practice.
-    SEU/EDAC corrected error count: low single digits nominal [Tier 1 direction / Tier 3 count]
+    SEU/EDAC corrected error count: low single digits nominal 
         Source: Flying Laptop satellite SEU studies (practice is real,
         per-pass count threshold is a synthetic placeholder).
     """
@@ -289,16 +272,6 @@ def generate_obc(rng, ctx):
         "seu_count": seu_count,
     }
 
-
-# ===========================================================================
-# 2.3 — Cross-channel correlation checks are embedded above:
-#   - Solar current tracks eclipse flag (generate_eps)
-#   - Battery voltage dips during eclipse (generate_eps)
-#   - Sun panel temp tracks eclipse (generate_tcs)
-#   - Battery temp lags sun panel temp (generate_tcs)
-#   - RSSI follows pass geometry (generate_comms)
-#   - Data rate tracks RSSI (generate_comms)
-# ===========================================================================
 
 
 def generate_one_pass(rng, pass_id):
@@ -358,10 +331,7 @@ def generate_dataset(n_passes=100, seed=42):
         passes.append(generate_one_pass(rng, pass_id))
     return passes
 
-
-# ===========================================================================
-# 2.4 — Output: save as JSON under data/generated/
-# ===========================================================================
+#output saved to json file
 
 def main():
     parser = argparse.ArgumentParser(description="Generate synthetic CubeSat telemetry passes")

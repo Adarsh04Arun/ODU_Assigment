@@ -1,15 +1,9 @@
 """
 Numeric anomaly scoring layer — classical ML per-subsystem anomaly detection.
-
-Implements PDD Section 6.1 (hybrid detection) and Section 6.2 (continuous
-severity scoring, not binary flags).
-
 Architecture: one Isolation Forest (primary) and one One-Class SVM (comparison)
 per subsystem, trained on nominal-only passes. Outputs a continuous anomaly
 score (0.0 = fully normal, 1.0 = maximally anomalous) per subsystem per pass,
 plus a confidence band.
-
-PDD Section 7.2.2 decided per-subsystem scoring (not unified) because it gives
 free subsystem-level attribution in the reasoning trace.
 """
 
@@ -24,7 +18,7 @@ from sklearn.preprocessing import MinMaxScaler
 
 
 # ===========================================================================
-# 5.1 — Feature engineering per subsystem
+# Feature engineering per subsystem
 # For each pass, compute summary statistics over the channel time series.
 # These are "windowed" features (summary over the full pass window).
 # ===========================================================================
@@ -104,6 +98,39 @@ FEATURE_EXTRACTORS = {
 
 SUBSYSTEMS = list(FEATURE_EXTRACTORS.keys())
 
+# Edge of the "normal envelope", as a fraction of the nominal training
+# distribution. A pass that scores more anomalous than this fraction of nominal
+# training passes begins to exceed the NOMINAL band. 0.03 was chosen from the
+# frontier sweep documented in context_report.md: with worst-of-five aggregation
+# it keeps ~80% of clean passes in NOMINAL while still escalating every anomaly
+# that is separable in the telemetry. The nominal passes that do cross over
+# surface at low confidence and are routed to human review, not auto-escalated.
+NOMINAL_EDGE_PCTILE = 0.03
+
+
+def envelope_anomaly_score(percentile, edge=NOMINAL_EDGE_PCTILE):
+    """Map a nominal-distribution percentile to an anomaly score in [0, 1].
+
+    `percentile` is the fraction of nominal training passes this pass scores as
+    normal-or-more-normal than: percentile → 1.0 means "more normal than all
+    training data"; percentile → 0.0 means "more anomalous than every nominal
+    pass the model has seen".
+
+    A naive `1 - percentile` is WRONG: the percentile-rank of an in-distribution
+    sample is ~uniform, so a *typical* nominal pass scores ~0.5, and taking the
+    worst of five subsystems then pins every clean pass near 0.85 (CRITICAL).
+    Instead we treat the whole nominal envelope as ~0 and only rise in the
+    anomalous tail:
+        percentile >= 0.5 (>= median nominal)   -> 0.0
+        percentile == edge (envelope edge)       -> 0.3 (NOMINAL ceiling)
+        percentile -> 0.0 (past the envelope)    -> 1.0
+    """
+    if percentile >= 0.5:
+        return 0.0
+    if percentile >= edge:
+        return 0.3 * (0.5 - percentile) / (0.5 - edge)
+    return float(min(0.3 + 0.7 * (edge - percentile) / edge, 1.0))
+
 
 def extract_all_features(pass_data):
     """Extract feature vectors for all subsystems from one pass.
@@ -114,10 +141,8 @@ def extract_all_features(pass_data):
     return {sub: fn(pass_data) for sub, fn in FEATURE_EXTRACTORS.items()}
 
 
-# ===========================================================================
-# 5.2 / 5.3 — Model training: Isolation Forest (primary) + One-Class SVM
-# ===========================================================================
 
+#Model training: Isolation Forest (primary) + One-Class SVM
 def train_models(nominal_passes):
     """Train one Isolation Forest and one One-Class SVM per subsystem.
 
@@ -179,10 +204,8 @@ def train_models(nominal_passes):
 
 
 
-# ===========================================================================
-# 5.4 / 5.5 — Scoring: continuous anomaly score + confidence
-# ===========================================================================
 
+#Scoring: continuous anomaly score + confidence
 def score_pass(pass_data, models, model_type="iforest"):
     """Score a single pass across all subsystems.
 
@@ -213,15 +236,17 @@ def score_pass(pass_data, models, model_type="iforest"):
         else:
             raw_score = model.decision_function(x_scaled)[0]
 
-        # Percentile-rank normalisation against the training distribution.
-        # Lower raw scores = more anomalous, so we convert:
-        #   percentile 0 (below all training) → anomaly_score 1.0
-        #   percentile 100 (above all training) → anomaly_score 0.0
+        # Envelope-distance normalisation against the nominal training
+        # distribution (see envelope_anomaly_score): the nominal envelope maps to
+        # ~0, and the score only rises in the anomalous tail. This replaces a
+        # naive `1 - percentile`, which pinned every clean pass near CRITICAL once
+        # the worst-of-five aggregation was applied.
         percentile = np.searchsorted(train_scores, raw_score) / len(train_scores)
-        anomaly_score = np.clip(1.0 - percentile, 0.0, 1.0)
+        anomaly_score = envelope_anomaly_score(percentile)
 
-        # 5.5 — Confidence: how far from the decision boundary (0.5 score)
-        # Near the boundary -> low confidence; far from it -> high confidence
+        # Confidence: how far from the decision boundary (0.5 score).
+        # Near the boundary -> low confidence; a clear nominal (score ~0) or a
+        # clear anomaly (score ~1) -> high confidence.
         confidence = min(1.0, abs(anomaly_score - 0.5) * 2.0)
 
         results[sub] = {
@@ -272,10 +297,8 @@ def load_models(path):
         return pickle.load(f)
 
 
-# ===========================================================================
-# CLI: train and evaluate
-# ===========================================================================
 
+# CLI: train and evaluate
 if __name__ == "__main__":
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
     from pipeline.severity import score_to_severity

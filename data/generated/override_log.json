@@ -1,0 +1,16 @@
+[
+  {
+    "timestamp": "2026-06-30T21:37:04.082552",
+    "pass_id": "NOM-0032",
+    "system_severity": "WATCH",
+    "operator_severity": "WATCH",
+    "reason": "Battery dipping a bit during eclipse, slightly off from last pass."
+  },
+  {
+    "timestamp": "2026-06-30T21:37:14.610682",
+    "pass_id": "NOM-0032",
+    "system_severity": "WATCH",
+    "operator_severity": "CAUTION",
+    "reason": "Battery dipping a bit during eclipse, slightly off from last pass."
+  }
+]

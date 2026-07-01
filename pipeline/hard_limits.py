@@ -1,54 +1,40 @@
 """
 Hard-limit rule engine — fully independent module with no learned parameters.
-
-Implements PDD Section 5 (Hard Operational Limits).
-Evaluated BEFORE any numeric or text scoring layers (PDD Section 7.2.2:
-pre-filter decision). If any rule fires, the result is immediately CRITICAL
-and cannot be overridden by anything downstream.
-
-Every threshold here is a fixed constant from PDD Sections 3 and 5,
-not something fit to the synthetic dataset.
-
-Design principle (PDD Section 5.1): hard limits are a simple, independently
-auditable rule layer that mirrors real out-of-limits (OOL) monitoring used
-operationally on real missions. Rule-based threshold checking has been a
-standard feature of ground telemetry processing since NASA's STARS II system
-in the mid-1960s.
+Stage 1, and the safety backbone. A rule engine with no learned parameters — every threshold is a fixed physics constant. 
+Five rules, one per subsystem: battery voltage floor (< 6.0 V), component temp survival range (−40 to +100 °C), tumble rate (> 10 deg/s), RSSI loss (below noise floor for > 30% of pass), and SEU spike (≥ 5 errors/reading). 
+Each check_* function is a pure function returning a breach record or None; 
+evaluate_hard_limits(pass) runs all five and returns the list of breaches. 
+If any rule fires, the final verdict is CRITICAL and cannot be overridden downstream.
 """
 
 import numpy as np
 
 
 # ===========================================================================
-# Hard-limit thresholds (PDD Section 5.2)
+# Hard-limit thresholds
 # Every value here is a physical safety limit, not a judgement call.
 # ===========================================================================
 
 # EPS: Battery bus voltage safe discharge floor
-# PDD: "below 6.0V on an 8.2V nominal bus" — over-discharge causes
-# irreversible Li-ion cell damage [Tier 2: generic Li-ion chemistry]
+# irreversible Li-ion cell damage
 BATTERY_VOLTAGE_FLOOR = 6.0
 
 # TCS: Component survival temperature range
-# PDD Section 3.3: -55°C to +85°C for power boards [Tier 1: DeMi CubeSat]
-# Using -40°C to +100°C general equipment range [Tier 1: CubeSat thermal lit.]
+# Using -40°C to +100°C general equipment range 
 COMPONENT_TEMP_MIN = -40.0
 COMPONENT_TEMP_MAX = 100.0
 
 # AOCS: Tumble-rate angular velocity threshold
-# PDD: "angular velocity exceeding a tumble-rate threshold with no
-# corresponding planned manoeuvre flag" [Tier 1: CADRE/XACT pointing data]
+# corresponding planned manoeuvre flag"
 # 10 deg/s chosen as threshold — well above any nominal attitude manoeuvre
 TUMBLE_RATE_THRESHOLD = 10.0  # deg/s
 
 # Comms: RSSI loss duration threshold
-# PDD: "RSSI loss for longer than an expected pass-geometry-based threshold"
 # If RSSI is below -100 dBm for >30% of the pass, that's unexpected signal loss
 RSSI_LOSS_FLOOR = -100.0  # dBm — below this is noise floor / no signal
 RSSI_LOSS_FRACTION = 0.30  # fraction of pass readings that triggers the rule
 
 # OBC: SEU/EDAC spike threshold
-# PDD: "correctable error count spikes sharply above the pass-to-pass baseline"
 # A sudden burst of 5+ errors in any reading is a spike (vs. gradual baseline)
 SEU_SPIKE_THRESHOLD = 5  # errors per reading
 
@@ -195,7 +181,7 @@ def check_seu_spike(pass_data):
     return None
 
 
-# All five rules in evaluation order (one per subsystem, per PDD Section 5.2)
+# All five rules in evaluation order
 ALL_RULES = [
     check_battery_voltage,
     check_component_temperature,

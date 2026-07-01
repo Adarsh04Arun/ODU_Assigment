@@ -7,11 +7,11 @@
     ],
     "note": "All looks fine. Nominal pass. Battery stable, no concerns.",
     "late_fusion_severity": "CRITICAL",
-    "late_fusion_confidence": 0.1,
+    "late_fusion_confidence": 0.6553,
     "early_fusion_severity": "NOMINAL"
   },
   "overall_accuracy": {
-    "late_fusion": 0.1468,
+    "late_fusion": 0.6147,
     "early_fusion": 0.9817
   }
 }

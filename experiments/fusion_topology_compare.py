@@ -1,20 +1,9 @@
 """
-Step 9.1 — Fusion topology comparison (PDD Section 7.2.1, axis 1).
-
 Compares late fusion (the default pipeline) vs early fusion (concatenated
 numeric + text features into a single classifier).
-
-The PDD predicts: a pass with a hard-limit-adjacent numeric signal paired
-with a reassuring-sounding note should be PRESERVED at high severity by
-late fusion, but DILUTED toward lower severity by early fusion — because
-in early fusion the reassuring text features can offset the alarming
-numeric features within the same model.
-
-This script:
-  1. Builds the early-fusion variant (logistic regression on combined features)
-  2. Runs both variants against the full labelled set
-  3. Captures the specific case the PDD predicts
-  4. Saves the comparison results
+Builds an early-fusion variant (logistic regression on a concatenated numeric + keyword-text feature vector) and runs both against the full labelled set. 
+Headline case: a genuine battery anomaly paired with a reassuring note — late fusion preserves the high severity, early fusion lets the reassuring text dilute it. 
+Demonstrates why late fusion is architecturally safer.
 """
 
 import json
@@ -180,7 +169,6 @@ def main():
         early_results.append(early_sev)
 
     # ------------------------------------------------------------------
-    # 9.1 — Capture the specific case the PDD predicts:
     # Hard-limit-adjacent numeric signal + reassuring note
     # ------------------------------------------------------------------
     print("=== KEY COMPARISON: Hard-limit-adjacent signal + reassuring note ===\n")
