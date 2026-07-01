@@ -1,6 +1,5 @@
 # Spacecraft Telemetry Health Assessment
 
-Ground Segment / Operations — Internship Technical Assessment
 
 Per-pass telemetry from a 3U–6U CubeSat-class LEO satellite, plus the operator's
 free-text note, go in; a severity-graded health assessment with an auditable
@@ -83,17 +82,7 @@ telemetry-health/
 ├── tests/                         # Unit tests + validation metrics
 │   ├── test_hard_limits.py
 │   ├── validate_hard_limits.py
-│   └── validation_metrics.py
-├── report/
-│   └── report.md                  # 3–4 page technical report (deliverable)
-├── context_report.md              # detailed, re-runnable results with per-pass tables
-├── demo_script.md                 # 5–7 minute live demo script
+│   └── validation_metrics.py # 5–7 minute live demo script
 ├── requirements.txt
 └── README.md
 ```
-
-## Deliverables
-
-- **[`report/report.md`](report/report.md)** — the technical report: approach & trade-offs, data & limitations, results, honest limitations, references.
-- **[`context_report.md`](context_report.md)** — the full results appendix, with every experiment's per-pass tables and the scripts that regenerate them.
-- **[`demo_script.md`](demo_script.md)** — the timed walkthrough for the live demo.
